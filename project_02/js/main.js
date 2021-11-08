@@ -101,8 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   const btns = document.querySelectorAll('[data-open]'),
-    modal = document.querySelector('.modal'),
-    btnClose = document.querySelector('[data-close]');
+    modal = document.querySelector('.modal');
+
 
     function openModal() {
       modal.style.display = 'block';
@@ -119,10 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = '';
   }
 
-  btnClose.addEventListener('click', closeModal);
 
   modal.addEventListener('click', event => {
-    if (event.target === modal) {
+    if (event.target === modal || event.target.getAttribute('data-close') == '') {
       closeModal();
     }
   });
@@ -136,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Timer modal
 
 
-  const timerId = setTimeout(openModal, 3000);
+  const timerId = setTimeout(openModal, 50000);
 
   function showModalScroll() {
     if(window.pageYOffset + document.documentElement.clientHeight >= document.
@@ -220,5 +219,140 @@ new MenuCard(
     'menu__item',
     'testClass'
   ).render();
+
+  // Forms
+
+
+  const forms = document.querySelectorAll('form');
+
+  const message = {
+    load: 'img/spinner.svg',
+    success: 'Спасибо скоро с Вами свяжемся',
+    failure: 'Что то пошло не так'
+  };
+
+  forms.forEach(item => {
+    postData(item);
+  });
+
+  function postData(form) {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const statusMessage = document.createElement('img');
+      statusMessage.src = message.load;
+      statusMessage.style.cssText = `
+        display: block;
+        margin: 0 auto;
+      `;
+    
+      form.insertAdjacentElement('afterend', statusMessage);
+
+
+      const request = new XMLHttpRequest();
+      
+      request.open('POST', '/project_02/server.php');
+
+      const formData = new FormData(form);
+      
+      const object = {};
+
+      formData.forEach((value, key) => {
+        object[key] = value;
+      });
+
+      const json = JSON.stringify(object);
+
+      request.send(json);
+
+      request.addEventListener('load', () => {
+       if(request.status === 200) {
+         console.log(request.response);
+
+         showThanksModal(message.success);
+         form.reset();
+        statusMessage.remove();
+         
+       } else {
+        showThanksModal(message.failure);
+       }
+      });
+    
+    });
+  }
+
+  function showThanksModal(message) {
+    const prevModalDialog = document.querySelector('.modal__dialog');
+    prevModalDialog.classList.add('hide');
+    
+    openModal();
+
+    const thanksModal = document.createElement('div');
+    thanksModal.classList.add('modal__dialog');
+    thanksModal.innerHTML = `
+      <div class="modal__content">
+      <div data-close class="modal__close">&times;</div>
+      <div class="modal__title">${message}</div>
+      </div>
+    `;
+
+    document.querySelector('.modal').append(thanksModal);
+    setTimeout(() => {
+      thanksModal.remove();
+      thanksModal.classList.add('show');
+      thanksModal.classList.remove('hide');
+      closeModal();
+    }, 4000);
+  }
+
+// Слайдер
+
+const slides = document.querySelectorAll('.offer__slide'),
+      prev = document.querySelector('.offer__slider-prev'),
+      next = document.querySelector('.offer__slider-next'),
+      total = document.querySelector('#total'),
+      current = document.querySelector('#current');
+      let slideIndex = 1;
+
+
+      showSlaides(slideIndex);
+
+      if (slides.length < 10) {
+        total.textContent = `0${slides.length}`;
+      } else {
+        total.textContent = slides.length;
+      }
+
+      function showSlaides(n) {
+        if(n > slides.length) {
+          slideIndex = 1;
+        }
+
+        if(n < 1) {
+          slideIndex = slides.length;
+        }
+
+        slides.forEach(item => item.style.display = 'none');
+
+        slides[slideIndex - 1].style.display = 'block';
+
+        if (slideIndex < 10) {
+          current.textContent = `0${slideIndex}`;
+        } else {
+          current.textContent = slideIndex;
+        }
+      }
+
+      function plusSlides(n) {
+        showSlaides(slideIndex += n);
+      }
+
+      prev.addEventListener('click', () => {
+        plusSlides(-1);
+      });
+      next.addEventListener('click', () => {
+        plusSlides(1);
+      });
+
 
 });
